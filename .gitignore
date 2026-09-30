@@ -12,3 +12,7 @@ frontend/.angular/
 # OS
 .DS_Store
 Thumbs.db
+
+# Project notes
+/OrbitERP — MVP Implementation Plan.md
+/STATUS.md
