@@ -23,14 +23,18 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
       - name: Build backend
-        run: |
-          cd backend
-          ./gradlew clean test
+        working-directory: backend
+        run: gradle clean build --no-daemon
 
       - name: Build frontend
+        working-directory: frontend
         run: |
-          cd frontend
           npm install
           npm run build
 

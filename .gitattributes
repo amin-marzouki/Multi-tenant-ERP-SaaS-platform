@@ -1,2 +1,13 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Shell scripts run in Linux (CI, Docker): keep LF even on a Windows checkout
+gradlew text eol=lf
+*.sh    text eol=lf
+
+# Windows batch files need CRLF
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+
+# Binaries
+*.jar   binary

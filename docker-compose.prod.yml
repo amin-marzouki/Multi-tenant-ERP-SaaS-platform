@@ -1,13 +1,12 @@
-version: '3.9'
-
 services:
   nginx:
-    image: nginx:alpine
+    # Angular production build served by nginx, which also proxies /api to the backend.
+    # TLS (port 443 + certificates) is not set up yet.
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
     ports:
       - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - backend
 
@@ -19,7 +18,8 @@ services:
       SPRING_DATASOURCE_USERNAME: orbiterp
       SPRING_DATASOURCE_PASSWORD: orbiterp
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
 
   mysql:
     image: mysql:8.0
@@ -30,6 +30,11 @@ services:
       MYSQL_ROOT_PASSWORD: root
     volumes:
       - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uorbiterp", "-porbiterp"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
 volumes:
   mysql_data:
