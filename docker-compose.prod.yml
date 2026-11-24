@@ -1,40 +1,50 @@
+# Production stack for the VPS. CI copies this file and writes .env next to it (see .env.example);
+# `docker compose -f docker-compose.prod.yml up -d --build` also works locally with your own .env.
 services:
   nginx:
-    # Angular production build served by nginx, which also proxies /api to the backend.
-    # TLS (port 443 + certificates) is not set up yet.
+    # Serves the Angular build and proxies /api to the backend.
+    # TLS (port 443 and certificates) is not set up yet.
+    image: ghcr.io/${IMAGE_OWNER:-amin-marzouki}/orbiterp-frontend:${IMAGE_TAG:-latest}
     build:
       context: ./frontend
       dockerfile: Dockerfile.prod
+    restart: unless-stopped
     ports:
       - "80:80"
     depends_on:
       - backend
 
   backend:
+    image: ghcr.io/${IMAGE_OWNER:-amin-marzouki}/orbiterp-backend:${IMAGE_TAG:-latest}
     build:
       context: ./backend
+    restart: unless-stopped
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/orbiterp?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: orbiterp
-      SPRING_DATASOURCE_PASSWORD: orbiterp
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD in .env}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      BASE_DOMAIN: ${BASE_DOMAIN:-}
+      DEMO_DATA_ENABLED: "false"
     depends_on:
       mysql:
         condition: service_healthy
 
   mysql:
     image: mysql:8.0
+    restart: unless-stopped
     environment:
       MYSQL_DATABASE: orbiterp
       MYSQL_USER: orbiterp
-      MYSQL_PASSWORD: orbiterp
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD in .env}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uorbiterp", "-porbiterp"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uorbiterp -p\"$$MYSQL_PASSWORD\" --silent"]
       interval: 5s
       timeout: 5s
-      retries: 20
+      retries: 30
 
 volumes:
   mysql_data:

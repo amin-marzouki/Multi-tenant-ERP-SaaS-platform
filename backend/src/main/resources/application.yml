@@ -2,24 +2,44 @@ spring:
   application:
     name: orbiterp-backend
   datasource:
+    # Local development defaults; containers override them with SPRING_DATASOURCE_* variables
     url: jdbc:mysql://localhost:3306/orbiterp?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: orbiterp
     password: orbiterp
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: validate
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
-        format_sql: true
+        jdbc:
+          time_zone: UTC
+        type:
+          preferred_instant_jdbc_type: TIMESTAMP
   flyway:
     enabled: true
     locations: classpath:db/migration
 
 server:
   port: 8080
+  forward-headers-strategy: framework
 
-jwt:
-  secret: change-me-in-production
-  expiration-ms: 3600000
+orbiterp:
+  jwt:
+    # Development-only default. Production must set JWT_SECRET (at least 32 characters).
+    secret: ${JWT_SECRET:dev-only-jwt-secret-change-me-0123456789abcdef}
+    expiration: PT8H
+  tenancy:
+    # e.g. "orbiterp.app" makes acme.orbiterp.app belong to tenant "acme". Empty turns the subdomain check off.
+    base-domain: ${BASE_DOMAIN:}
+  demo-data:
+    # Creates the demo tenants and users described in backend/README.md
+    enabled: ${DEMO_DATA_ENABLED:false}
+
+logging:
+  pattern:
+    level: "%5p [%X{traceId:-}]"
+  level:
+    # preferred_instant_jdbc_type is marked incubating and would be logged once per timestamp column
+    org.hibernate.orm.incubating: ERROR

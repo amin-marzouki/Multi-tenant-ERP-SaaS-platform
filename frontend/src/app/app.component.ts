@@ -1,7 +1,10 @@
 import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-root',
-  template: '<h1 class="text-2xl font-bold p-6">OrbitERP MVP</h1>'
+  standalone: true,
+  imports: [RouterOutlet],
+  template: '<router-outlet />',
 })
 export class AppComponent {}
